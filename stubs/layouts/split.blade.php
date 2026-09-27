@@ -11,12 +11,15 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-canvas font-body text-ink">
+        {{-- The page's first link, shown only to the keyboard: past the header and its links, to the page itself. A site read with a keyboard or a screen reader otherwise starts every page by tabbing through the whole navigation. --}}
+        <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-canvas focus:px-4 focus:py-2 focus:text-ink focus:shadow-lg">{{ __('kit.skip') }}</a>
+
         <header class="wrap pt-4">
             {{-- region:nav --}}
         </header>
 
         {{-- The opening is two columns only while the visit side holds something; the hero takes the width alone otherwise. Neither column is main's frame or the hero band, so a direction draws the components in them and leaves the columns alone. --}}
-        <main>
+        <main id="main" tabindex="-1" class="outline-none">
             <div class="py-12 sm:py-16 [&:not(:has(>div>*>*))]:hidden">
                 <div class="wrap grid items-center gap-10 lg:[&:has(>aside>*)]:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
                     <div class="min-w-0 [&:not(:has(>*))]:hidden">

@@ -39,8 +39,8 @@ test('an import brings what a component renders, before it, once', function () {
         ->toBe(['button', 'pagination', 'badge', 'tabs', 'vertical-nav']);
 });
 
-test('a section that draws a photograph brings media before it', function () {
-    expect(kit()->closure(['hero', 'features']))->toBe(['media', 'hero', 'features']);
+test('a section that draws a photograph brings media before it, and an icon what it draws one with', function () {
+    expect(kit()->closure(['hero', 'features']))->toBe(['media', 'hero', 'icon', 'features']);
 });
 
 test('an unknown component is refused rather than skipped', function () {
