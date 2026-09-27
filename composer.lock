@@ -6184,12 +6184,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/alpha-omega-corp/laravel.git",
-                "reference": "28318c6cc69daa357268f0420b4b51a2196aa352"
+                "reference": "25b9a42dcb05df12efc46bb299409f7355ebe578"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/alpha-omega-corp/laravel/zipball/28318c6cc69daa357268f0420b4b51a2196aa352",
-                "reference": "28318c6cc69daa357268f0420b4b51a2196aa352",
+                "url": "https://api.github.com/repos/alpha-omega-corp/laravel/zipball/25b9a42dcb05df12efc46bb299409f7355ebe578",
+                "reference": "25b9a42dcb05df12efc46bb299409f7355ebe578",
                 "shasum": ""
             },
             "require": {
@@ -6287,7 +6287,7 @@
                 "source": "https://github.com/alpha-omega-corp/laravel/tree/production",
                 "issues": "https://github.com/alpha-omega-corp/laravel/issues"
             },
-            "time": "2026-09-26T13:25:32+00:00"
+            "time": "2026-09-27T10:30:52+00:00"
         },
         {
             "name": "brianium/paratest",
