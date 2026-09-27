@@ -123,6 +123,13 @@ class UiKit
         $shared = [
             'resources/css/kit.css',
             'resources/css/themes.css',
+            // Which faces each palette is drawn in, read by vite.config.js. The
+            // server installs with --no-dev and builds the front end there, so
+            // the site needs its own copy; a kit older than the map has none.
+            ...array_filter(
+                ['resources/css/fonts.json'],
+                fn (string $path): bool => $this->files->exists($package.'/'.$path),
+            ),
             ...array_map(
                 fn (SplFileInfo $file): string => 'lang/'.str_replace('\\', '/', $file->getRelativePathname()),
                 $this->files->allFiles($package.'/lang'),
@@ -131,7 +138,7 @@ class UiKit
 
         $paths = [
             ...$shared,
-            ...array_map(fn (string $name): string => 'resources/views/components/kit/'.$components[$name]['blade'].'.blade.php', $closure),
+            ...array_map(fn (string $name): string => 'resources/views/components/'.$components[$name]['blade'].'.blade.php', $closure),
         ];
 
         $result = ['imported' => [], 'skipped' => [], 'js' => []];
@@ -186,10 +193,20 @@ class UiKit
         $stub = $this->files->get(base_path("stubs/layouts/{$layout}.blade.php"));
 
         return (string) preg_replace_callback(self::REGION, function (array $match) use ($regions): string {
-            $tags = array_map(fn (string $name): string => $match[1]."<x-kit.{$name} />", $regions[$match[2]] ?? []);
+            $tags = array_map(fn (string $name): string => $match[1].'<'.$this->tag($name).' />', $regions[$match[2]] ?? []);
 
             return implode("\n", $tags);
         }, $stub);
+    }
+
+    /**
+     * A component's Blade tag, read off the file it is published as:
+     * kit/button is x-kit.button, ui/layout/cards/01-basic-card is
+     * x-ui.layout.cards.01-basic-card.
+     */
+    public function tag(string $name): string
+    {
+        return 'x-'.str_replace('/', '.', $this->components()[$name]['blade']);
     }
 
     private function package(): string

@@ -15,7 +15,7 @@ use InvalidArgumentException;
  * set a page uses, which is what makes resources/components.php worth keeping.
  */
 #[Signature('ui:import
-    {components* : Kit components by name, e.g. pagination table}
+    {components* : Kit components by name or raw ones by reference, e.g. pagination layout/cards/01-basic-card}
     {--force : Overwrite files that already exist}')]
 #[Description('Import kit components and everything they require')]
 class UiImportCommand extends Command
@@ -33,7 +33,7 @@ class UiImportCommand extends Command
             return self::FAILURE;
         }
 
-        self::report($this, $kit->closure($names), $result);
+        self::report($this, $kit, $kit->closure($names), $result);
 
         return self::SUCCESS;
     }
@@ -44,9 +44,9 @@ class UiImportCommand extends Command
      * @param  list<string>  $closure
      * @param  array{imported: list<string>, skipped: list<string>, js: list<string>}  $result
      */
-    public static function report(Command $command, array $closure, array $result): void
+    public static function report(Command $command, UiKit $kit, array $closure, array $result): void
     {
-        $command->components->info('Imported '.implode(', ', array_map(fn (string $name): string => "<x-kit.{$name}>", $closure)).'.');
+        $command->components->info('Imported '.implode(', ', array_map(fn (string $name): string => '<'.$kit->tag($name).'>', $closure)).'.');
 
         if ($result['skipped'] !== []) {
             $command->components->warn('Kept the application\'s own copy of these; pass --force to overwrite them:');

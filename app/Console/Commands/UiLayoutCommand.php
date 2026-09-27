@@ -68,7 +68,7 @@ class UiLayoutCommand extends Command
         $files->ensureDirectoryExists(dirname($view));
         $files->put($view, $page);
 
-        UiImportCommand::report($this, $kit->closure($placed), $result);
+        UiImportCommand::report($this, $kit, $kit->closure($placed), $result);
         $this->components->info("Wrote the {$decoded['layout']} layout to resources/views/".str_replace('.', '/', (string) $this->option('view')).'.blade.php.');
 
         return self::SUCCESS;
