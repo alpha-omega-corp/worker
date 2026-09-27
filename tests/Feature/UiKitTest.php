@@ -50,10 +50,15 @@ test('an unknown component is refused rather than skipped', function () {
 test('a layout\'s regions are the markers in its stub', function () {
     $layouts = kit()->layouts();
 
-    expect(array_keys($layouts))->toBe(['console', 'focus', 'marketing', 'stacked', 'workspace'])
+    expect(array_keys($layouts))->toBe(['board', 'carte', 'console', 'focus', 'journal', 'marketing', 'poster', 'split', 'stacked', 'workspace'])
         ->and($layouts['console']['regions'])->toBe(['nav', 'header', 'main'])
         ->and($layouts['console']['summary'])->toStartWith('A persistent sidebar')
-        ->and($layouts['marketing']['regions'])->toBe(['nav', 'hero', 'main', 'band', 'footer']);
+        ->and($layouts['marketing']['regions'])->toBe(['nav', 'hero', 'main', 'band', 'footer'])
+        ->and($layouts['split']['regions'])->toBe(['nav', 'hero', 'visit', 'main', 'footer'])
+        ->and($layouts['carte']['regions'])->toBe(['nav', 'lead', 'offer', 'visit', 'main', 'band', 'footer'])
+        ->and($layouts['poster']['regions'])->toBe(['nav', 'hero', 'facts', 'main', 'footer'])
+        ->and($layouts['board']['regions'])->toBe(['nav', 'hero', 'main', 'footer'])
+        ->and($layouts['journal']['regions'])->toBe(['nav', 'hero', 'story', 'gallery', 'main', 'footer']);
 });
 
 // hero and band were added to marketing later; a schema written before them
