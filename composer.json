@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "alpha-omega-corp/site": "dev-production",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "livewire/blaze": "^1.0",
@@ -110,6 +111,10 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": {
+        "site": {
+            "type": "vcs",
+            "url": "https://github.com/alpha-omega-corp/site"
+        },
         "ui-kit": {
             "type": "vcs",
             "url": "https://github.com/alpha-omega-corp/laravel"
