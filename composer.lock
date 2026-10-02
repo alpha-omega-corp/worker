@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:alpha-omega-corp/site.git",
-                "reference": "73b354a958ec9bc0cf3b5a85ee6c39ee7ab863ec"
+                "reference": "46f20fd233551a11686bb41c25cc2f45e2eb2230"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/alpha-omega-corp/site/zipball/73b354a958ec9bc0cf3b5a85ee6c39ee7ab863ec",
-                "reference": "73b354a958ec9bc0cf3b5a85ee6c39ee7ab863ec",
+                "url": "https://api.github.com/repos/alpha-omega-corp/site/zipball/46f20fd233551a11686bb41c25cc2f45e2eb2230",
+                "reference": "46f20fd233551a11686bb41c25cc2f45e2eb2230",
                 "shasum": ""
             },
             "require": {
@@ -71,7 +71,7 @@
                 "source": "https://github.com/alpha-omega-corp/site/tree/production",
                 "issues": "https://github.com/alpha-omega-corp/site/issues"
             },
-            "time": "2026-09-27T00:44:35+00:00"
+            "time": "2026-10-02T21:11:09+00:00"
         },
         {
             "name": "blade-ui-kit/blade-icons",
@@ -6392,12 +6392,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/alpha-omega-corp/laravel.git",
-                "reference": "21839fda0e9b0677c6baa18675334dd93ebc8435"
+                "reference": "8620b5823098546df4c729a5c8bf1718dd935361"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/alpha-omega-corp/laravel/zipball/21839fda0e9b0677c6baa18675334dd93ebc8435",
-                "reference": "21839fda0e9b0677c6baa18675334dd93ebc8435",
+                "url": "https://api.github.com/repos/alpha-omega-corp/laravel/zipball/8620b5823098546df4c729a5c8bf1718dd935361",
+                "reference": "8620b5823098546df4c729a5c8bf1718dd935361",
                 "shasum": ""
             },
             "require": {
@@ -6496,7 +6496,7 @@
                 "source": "https://github.com/alpha-omega-corp/laravel/tree/production",
                 "issues": "https://github.com/alpha-omega-corp/laravel/issues"
             },
-            "time": "2026-09-27T14:12:58+00:00"
+            "time": "2026-10-02T21:11:01+00:00"
         },
         {
             "name": "brianium/paratest",

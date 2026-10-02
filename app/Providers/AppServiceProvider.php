@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\Pages;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(Pages::class, fn (): Pages => new Pages(resource_path('pages.json')));
     }
 
     /**
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        $this->app->make(Pages::class)->share();
     }
 
     /**

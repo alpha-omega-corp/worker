@@ -1,5 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Support\Pages;
 
-Route::view('/', 'welcome')->name('home');
+// Every page in resources/pages.json, or welcome at / when there is none.
+app(Pages::class)->routes();

@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <x-site::head />
+        <x-site::head :title="$sitePage['title'] ?? null" :description="$sitePage['description'] ?? null" />
 
         @fonts
         @vite(['resources/css/app.css', 'resources/js/app.js'])
