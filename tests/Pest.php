@@ -1,6 +1,9 @@
 <?php
 
+use App\Support\Pages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\View;
 use Tests\TestCase;
 
 /*
@@ -47,4 +50,42 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * A site of its own for a test to build into, as the application's base path:
+ * the template's stubs and component graph, and nothing else — so the views,
+ * mockups, components and config a command writes land in it rather than in
+ * the site these tests ship with. The test deletes it.
+ */
+function aSiteOfItsOwn(): string
+{
+    $site = sys_get_temp_dir().'/site-'.uniqid();
+    File::ensureDirectoryExists("{$site}/resources/layouts");
+    File::ensureDirectoryExists("{$site}/config");
+    File::link(base_path('stubs'), "{$site}/stubs");
+    File::link(base_path('resources/components.php'), "{$site}/resources/components.php");
+    app()->setBasePath($site);
+    app()->instance(Pages::class, new Pages(resource_path('pages.json')));
+    View::addLocation("{$site}/resources/views");
+
+    return $site;
+}
+
+/**
+ * A mockup in the site's resources/layouts, as deployer saves one.
+ *
+ * @param  array<string, mixed>  $schema
+ */
+function aMockup(string $view, array $schema): void
+{
+    File::put(resource_path("layouts/{$view}.json"), json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function mockupOf(string $view): array
+{
+    return json_decode((string) file_get_contents(resource_path("layouts/{$view}.json")), true);
 }

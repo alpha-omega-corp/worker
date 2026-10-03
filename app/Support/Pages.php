@@ -147,8 +147,11 @@ class Pages
 
     /**
      * Hand the pages to what reads them while the site runs: every view, its
-     * components too, since the kit's site-header draws $siteNav; and the
-     * base's /sitemap.xml, which reads config('site.sitemap') per request.
+     * components too, since the kit's site-header draws $siteNav; the base's
+     * /sitemap.xml, which reads config('site.sitemap') per request; and the
+     * base's admin, drawn in config('site.palette'), which nothing else sets —
+     * the palette of the home page's mockup, every page's since a site has one
+     * look, unless config/site.php names one.
      *
      * A composer rather than View::share, because which page is current is
      * known only once the request is routed, after boot.
@@ -158,6 +161,9 @@ class Pages
         if ($this->exists()) {
             config(['site.sitemap' => array_column($this->all(), 'path')]);
         }
+
+        $home = collect($this->all())->firstWhere('path', '/')['view'] ?? 'welcome';
+        config(['site.palette' => config('site.palette') ?? $this->mockups()->palette($home)]);
 
         View::composer('*', function (ViewContract $view): void {
             $view->with([
@@ -169,12 +175,12 @@ class Pages
     }
 
     /**
-     * The mockup a page is built from: resources/layouts/<view>.json, beside
-     * the manifest.
+     * The mockups the pages are built from: resources/layouts/<view>.json,
+     * beside the manifest.
      */
-    public function mockup(string $view): string
+    public function mockups(): Mockups
     {
-        return dirname($this->manifest)."/layouts/{$view}.json";
+        return new Mockups(dirname($this->manifest).'/layouts');
     }
 
     /**

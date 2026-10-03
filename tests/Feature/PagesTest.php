@@ -232,6 +232,34 @@ test('each layout puts its page\'s title and description in the head, the title 
         ->assertSee('<meta name="description" content="What we cook this week.">', false);
 })->with(array_map(fn (string $stub): string => basename($stub, '.blade.php'), glob(__DIR__.'/../../stubs/layouts/*.blade.php') ?: []));
 
+test('each layout carries the site\'s icons, and a skip link that lands on its main', function (string $layout) {
+    $this->withoutVite();
+    servePages($this->folder, [aPage('welcome', '/'), aPage('pages.menu', '/menu')]);
+    File::put("{$this->folder}/views/pages/menu.blade.php", app(UiKit::class)->render($layout, []));
+
+    $document = new DOMDocument;
+    $document->loadHTML((string) $this->get('/menu')->assertOk()->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $page = new DOMXPath($document);
+
+    expect($page->query('/html/head/link[@rel="icon"][@href="/favicon.svg"]')->length)->toBe(1)
+        ->and($page->evaluate('string(/html/body/*[1][self::a]/@href)'))->toBe('#main')
+        ->and($page->query('//main[@id="main"]')->length)->toBe(1);
+})->with(array_map(fn (string $stub): string => basename($stub, '.blade.php'), glob(__DIR__.'/../../stubs/layouts/*.blade.php') ?: []));
+
+test('the admin wears the palette of the home page\'s mockup, unless config/site.php names one', function (?string $named, string $worn) {
+    $this->withoutVite();
+    config(['site.palette' => $named]);
+    File::ensureDirectoryExists("{$this->folder}/layouts");
+    File::put("{$this->folder}/layouts/pages.home.json", '{"layout": "split", "theme": "harbour", "regions": {}}');
+
+    servePages($this->folder, [aPage('pages.home', '/'), aPage('pages.menu', '/menu', ['label' => 'Menu'])]);
+
+    $this->get('/admin/login')->assertSee('data-palette="'.$worn.'"', false);
+})->with([
+    'none named' => [null, 'harbour'],
+    'one named' => ['vellum', 'vellum'],
+]);
+
 test('welcome puts its page\'s title in the head as the layouts do', function () {
     $this->withoutVite();
     servePages($this->folder, [aPage('welcome', '/', ['title' => 'Accueil'])]);

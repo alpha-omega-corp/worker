@@ -34,7 +34,7 @@ class UiPagesCommand extends Command
                 $page['title'] ?? '',
                 $page['label'] ?? '',
                 View::exists($page['view']) ? 'yes' : 'missing',
-                is_file($pages->mockup($page['view'])) ? 'yes' : 'none',
+                is_file($pages->mockups()->path($page['view'])) ? 'yes' : 'none',
             ], $pages->all()));
         }
 

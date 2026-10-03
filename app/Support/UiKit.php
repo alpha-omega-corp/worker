@@ -10,9 +10,10 @@ use Symfony\Component\Finder\SplFileInfo;
 /**
  * The shared UI kit as this application imports it: which components exist and
  * what each one needs (resources/components.php), which layouts they can be
- * placed into (stubs/layouts), and the two acts built on those — importing a set
- * of components with everything they require, and rendering a layout with the
- * components in their regions.
+ * placed into (stubs/layouts), which palettes and directions a page can be drawn
+ * in (the kit's themes.css and kit.css), and the two acts built on those —
+ * importing a set of components with everything they require, and rendering a
+ * layout with the components in their regions, in its palette and direction.
  *
  * The markup itself stays in the ui-kit package; this copies it into the
  * application, where it becomes the application's own to edit.
@@ -26,6 +27,21 @@ class UiKit
      * in it still renders.
      */
     private const REGION = '/^([ \t]*)\{\{--\s*region:([a-z][a-z0-9-]*)\s*--\}\}[ \t]*$/m';
+
+    /**
+     * A palette is a `[data-palette='<name>']` block in themes.css and a
+     * direction a `[data-direction='<name>']` root block in kit.css: deployer's
+     * own patterns, so the two offer and refuse the same names.
+     */
+    private const PALETTE = "/\\[data-palette='([a-z][a-z0-9-]*)'\\]/";
+
+    private const DIRECTION = "/\\[data-direction='([a-z][a-z0-9-]*)'\\]/";
+
+    /**
+     * The page's `<html …>` tag, whole. Its values are read as quoted strings,
+     * since the stubs' `lang` holds Blade with a `->` in it.
+     */
+    private const HTML = '/<html\b(?:[^>"\']|"[^"]*"|\'[^\']*\')*>/';
 
     public function __construct(private Filesystem $files, private ?string $target = null) {}
 
@@ -169,12 +185,93 @@ class UiKit
     }
 
     /**
+     * The palettes a page can be drawn in: the application's themes.css, or the
+     * package's before the first import copies it.
+     *
+     * @return list<string>
+     */
+    public function palettes(): array
+    {
+        return $this->names('resources/css/themes.css', self::PALETTE);
+    }
+
+    /**
+     * The directions a page can be drawn in, read the same way off kit.css:
+     * none for a copy older than them.
+     *
+     * @return list<string>
+     */
+    public function directions(): array
+    {
+        return $this->names('resources/css/kit.css', self::DIRECTION);
+    }
+
+    /**
+     * Refuse a palette or a direction the kit cannot draw, in deployer's words,
+     * naming the ones it can. An empty direction is none, which is always
+     * drawable; null asks nothing.
+     *
+     * @throws InvalidArgumentException
+     */
+    public function ensureLook(?string $palette, ?string $direction): void
+    {
+        if ($palette !== null && ! in_array($palette, $palettes = $this->palettes(), true)) {
+            throw new InvalidArgumentException("There is no palette called [{$palette}] in this application's themes.css. There is: ".(implode(', ', $palettes) ?: 'none').'.');
+        }
+
+        if ($direction === null || $direction === '' || in_array($direction, $directions = $this->directions(), true)) {
+            return;
+        }
+
+        throw new InvalidArgumentException($directions === []
+            ? "This application's kit.css defines no direction — it is older than them: leave direction out, or copy the kit's resources/css/kit.css over the application's."
+            : "There is no direction called [{$direction}] in this application's kit.css. There is: ".implode(', ', $directions).'.');
+    }
+
+    /**
+     * A page drawn in a palette and a direction, both on its `<html>` and
+     * nowhere else: a built page is somebody's to fill, and a swatch's
+     * `data-palette` or a marquee's `data-direction` inside it is theirs.
+     * Null leaves what the page has, and an empty direction takes it off.
+     *
+     * @throws InvalidArgumentException for a palette or a direction the kit cannot draw
+     */
+    public function dress(string $page, ?string $palette, ?string $direction): string
+    {
+        $this->ensureLook($palette, $direction);
+
+        return (string) preg_replace_callback(self::HTML, function (array $tag) use ($palette, $direction): string {
+            $html = $palette === null ? $tag[0] : self::withAttribute($tag[0], 'data-palette', $palette);
+
+            return $direction === null ? $html : self::withAttribute($html, 'data-direction', $direction);
+        }, $page, 1);
+    }
+
+    /**
+     * The palette and the direction a page is drawn in, off its `<html>`.
+     *
+     * @return array{palette: ?string, direction: ?string}
+     */
+    public function look(string $page): array
+    {
+        preg_match(self::HTML, $page, $tag);
+        preg_match('/\sdata-palette="([^"]*)"/', $tag[0] ?? '', $palette);
+        preg_match('/\sdata-direction="([^"]*)"/', $tag[0] ?? '', $direction);
+
+        return ['palette' => ($palette[1] ?? '') ?: null, 'direction' => ($direction[1] ?? '') ?: null];
+    }
+
+    /**
      * A layout's stub with each region's components written in as tags, at the
-     * marker's indentation. A region nothing was placed in is left empty.
+     * marker's indentation, drawn in the palette and the direction given — the
+     * stub's own palette and no direction otherwise. A region nothing was
+     * placed in is left empty.
      *
      * @param  array<string, list<string>>  $regions
+     *
+     * @throws InvalidArgumentException for a layout, a region, a component, a palette or a direction there is not
      */
-    public function render(string $layout, array $regions): string
+    public function render(string $layout, array $regions, ?string $palette = null, ?string $direction = null): string
     {
         $layouts = $this->layouts();
 
@@ -192,11 +289,13 @@ class UiKit
 
         $stub = $this->files->get(base_path("stubs/layouts/{$layout}.blade.php"));
 
-        return (string) preg_replace_callback(self::REGION, function (array $match) use ($regions): string {
+        $page = (string) preg_replace_callback(self::REGION, function (array $match) use ($regions): string {
             $tags = array_map(fn (string $name): string => $match[1].'<'.$this->tag($name).' />', $regions[$match[2]] ?? []);
 
             return implode("\n", $tags);
         }, $stub);
+
+        return $palette === null && $direction === null ? $page : $this->dress($page, $palette, $direction);
     }
 
     /**
@@ -223,6 +322,44 @@ class UiKit
     private function path(string $relative): string
     {
         return rtrim($this->target ?? base_path(), '/').'/'.$relative;
+    }
+
+    /**
+     * Every name a pattern finds in one of the kit's stylesheets, once each, in
+     * the order it first appears: the application's copy, once imported its
+     * own and perhaps edited, else the package's. None without either, as on a
+     * server that installed without the kit before anything imported it.
+     *
+     * @return list<string>
+     */
+    private function names(string $stylesheet, string $pattern): array
+    {
+        $path = $this->path($stylesheet);
+        $package = InstalledVersions::isInstalled(self::PACKAGE) ? InstalledVersions::getInstallPath(self::PACKAGE) : null;
+
+        if (! $this->files->exists($path) && $package !== null) {
+            $path = "{$package}/{$stylesheet}";
+        }
+
+        preg_match_all($pattern, $this->files->exists($path) ? $this->files->get($path) : '', $found);
+
+        return array_values(array_unique($found[1]));
+    }
+
+    /**
+     * An attribute set on a tag: replaced where it is, added before its end,
+     * or taken off for an empty value.
+     */
+    private static function withAttribute(string $tag, string $name, string $value): string
+    {
+        $set = $value === '' ? '' : " {$name}=\"{$value}\"";
+        $existing = "/\\s+{$name}=\"[^\"]*\"/";
+
+        if (preg_match($existing, $tag) === 1) {
+            return (string) preg_replace($existing, $set, $tag, 1);
+        }
+
+        return $set === '' ? $tag : substr($tag, 0, -1).$set.'>';
     }
 
     /**

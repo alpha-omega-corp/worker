@@ -1,0 +1,2 @@
+{{-- The page's first link, shown only to the keyboard: past the header and its links, to the page itself, which every layout marks <main id="main">. A site read with a keyboard or a screen reader otherwise starts every page by tabbing through the whole navigation. --}}
+<a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-canvas focus:px-4 focus:py-2 focus:text-ink focus:shadow-lg">{{ __('kit.skip') }}</a>

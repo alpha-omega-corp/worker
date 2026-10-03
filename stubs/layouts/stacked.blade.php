@@ -2,15 +2,11 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-palette="orchard">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <x-site::head :title="$sitePage['title'] ?? null" :description="$sitePage['description'] ?? null" />
-
-        @fonts
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('partials.head')
     </head>
     <body class="min-h-screen bg-canvas font-body text-ink">
+        @include('partials.skip-link')
+
         <nav class="border-b border-rule">
             {{-- region:nav --}}
         </nav>
@@ -21,7 +17,7 @@
             </div>
         </header>
 
-        <main class="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
+        <main id="main" tabindex="-1" class="mx-auto grid max-w-7xl gap-6 px-4 py-8 outline-none sm:px-6 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
             {{-- region:main --}}
         </main>
     </body>

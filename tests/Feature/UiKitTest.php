@@ -28,9 +28,16 @@ test('the graph names exactly the components the package ships', function () {
             expect(isset($graph[$required]))->toBeTrue("{$name} requires {$required}, which is not in the graph");
         }
 
-        $usesElements = str_contains((string) file_get_contents("{$components}/{$component['blade']}.blade.php"), '<el-');
+        $markup = (string) file_get_contents("{$components}/{$component['blade']}.blade.php");
 
-        expect($component['js'])->toBe($usesElements ? '@tailwindplus/elements' : null, "{$name} says js {$component['js']}");
+        expect($component['js'])->toBe(str_contains($markup, '<el-') ? '@tailwindplus/elements' : null, "{$name} says js {$component['js']}");
+
+        // What it requires is what its markup renders: one left out is a page
+        // that fails to compile once it is imported alone.
+        preg_match_all('/<x-kit\.([a-z0-9-]+)/', $markup, $rendered);
+
+        expect(collect($component['requires'])->sort()->values()->all())
+            ->toBe(collect($rendered[1])->reject($name)->unique()->sort()->values()->all(), "{$name}'s requires");
     }
 });
 
@@ -142,6 +149,29 @@ test('each component is written into its region, at the region\'s indentation', 
 test('a region the layout does not have is refused', function () {
     kit()->render('console', ['sidebar' => ['side-nav']]);
 })->throws(InvalidArgumentException::class, 'no region called [sidebar]');
+
+test('a page is drawn in its palette and direction on its <html> alone', function () {
+    $page = kit()->render('split', ['hero' => ['hero']], 'harbour', 'hearth');
+
+    expect($page)->toContain('<html lang="{{ str_replace(\'_\', \'-\', app()->getLocale()) }}" data-palette="harbour" data-direction="hearth">')
+        ->and(kit()->look($page))->toBe(['palette' => 'harbour', 'direction' => 'hearth']);
+
+    // A page filled since it was built is somebody's: the swatches and the
+    // marquee in it keep their own attributes.
+    $filled = str_replace('</main>', '<div data-palette="vellum"></div><div data-direction="left"></div></main>', $page);
+
+    expect(kit()->dress($filled, 'sandstone', ''))
+        ->toContain('" data-palette="sandstone">', '<div data-palette="vellum">', '<div data-direction="left">')
+        ->not->toContain('data-direction="hearth"');
+});
+
+test('a palette or a direction the kit does not draw is refused, naming the ones it does', function (?string $palette, ?string $direction, string $said) {
+    expect(fn () => kit()->render('split', [], $palette, $direction))->toThrow(InvalidArgumentException::class, $said);
+})->with([
+    'a palette' => ['teal', null, 'There is no palette called [teal] in this application\'s themes.css. There is: orchard, sandstone'],
+    'a direction' => [null, 'lamplight', 'There is no direction called [lamplight] in this application\'s kit.css. There is: hearth, counter'],
+    'an attribute passed as a palette' => ['orchard" onload="x', null, 'There is no palette called [orchard" onload="x]'],
+]);
 
 test('an import copies the closure and the kit it reads, and keeps what the application already has', function () {
     $target = sys_get_temp_dir().'/ui-kit-'.uniqid();
