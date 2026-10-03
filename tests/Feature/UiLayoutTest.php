@@ -77,8 +77,10 @@ test('on the base, the prefabs a page places are switched on, and building it ag
         ->assertSuccessful();
 });
 
-test('a prefab the base refuses to switch on is said, and the page stands unmarked', function () {
-    File::put(config_path('site.php'), "<?php\n\nreturn [];\n");
+// The page is written by then, so the command still succeeds: deployer reads a
+// failed ui:layout as a page it may put back as it was.
+test('a prefab the base refuses to switch on is said, and the page stands unmarked', function (Closure $breakTheConfig) {
+    $breakTheConfig();
     aMockup('welcome', ['layout' => 'split', 'regions' => ['visit' => ['schedule']]]);
 
     $this->artisan('ui:layout', ['schema' => 'resources/layouts/welcome.json'])
@@ -87,7 +89,10 @@ test('a prefab the base refuses to switch on is said, and the page stands unmark
 
     expect(file_get_contents(resource_path('views/welcome.blade.php')))->toContain('<x-kit.schedule />')
         ->and(mockupOf('welcome'))->not->toHaveKey('builtAs');
-});
+})->with([
+    'its prefabs line edited away' => fn () => File::put(config_path('site.php'), "<?php\n\nreturn [];\n"),
+    'no config folder to publish into' => fn () => File::deleteDirectory(config_path()),
+]);
 
 test('a page built with bare tags names the business in its header and footer from its identity, and a tag\'s own word wins', function () {
     Content::save('identity', ['name' => 'Boulangerie Favre', 'street' => 'Rue du Bourg 3', 'postcode' => '1003', 'city' => 'Lausanne', 'phone' => '021 312 45 67', 'email' => 'bonjour@favre.ch']);

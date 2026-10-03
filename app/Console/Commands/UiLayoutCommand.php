@@ -13,6 +13,7 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Throwable;
 
 /**
  * Build a page from a layout schema, whole: import every component it places,
@@ -137,9 +138,11 @@ class UiLayoutCommand extends Command
      * what it says of the components it imports again is noise after this
      * import, so only whether it changed anything is said.
      *
-     * A refusal — a config/site.php edited out of the one line it rewrites — is
-     * said, and leaves the page unmarked, but the page stands, as deployer's
-     * own build leaves it: once the file is fixed, building it again finishes.
+     * A refusal — a config/site.php edited out of the one line it rewrites, or
+     * anything site:prefab throws — is said and leaves the page unmarked, but
+     * the command still succeeds: the page is written and stands. Deployer reads
+     * a failed ui:layout as a page it may put back as it was, so nothing after
+     * the write may fail it. Once the file is fixed, building again finishes.
      *
      * @param  list<string>  $placed
      */
@@ -161,8 +164,16 @@ class UiLayoutCommand extends Command
 
         $config = config_path('site.php');
         $before = is_file($config) ? file_get_contents($config) : null;
+        $said = new BufferedOutput;
 
-        if ($this->runCommand('site:prefab', ['action' => 'enable', 'names' => $names], $said = new BufferedOutput) !== self::SUCCESS) {
+        try {
+            $refused = $this->runCommand('site:prefab', ['action' => 'enable', 'names' => $names], $said) !== self::SUCCESS;
+        } catch (Throwable $e) {
+            $said->write($e->getMessage());
+            $refused = true;
+        }
+
+        if ($refused) {
             $this->components->error('site:prefab enable '.implode(' ', $names).' refused, so the prefabs on this page draw nothing:');
             $this->line(trim($said->fetch()));
 
