@@ -3,6 +3,7 @@
 use App\Support\UiKit;
 use Composer\InstalledVersions;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Artisan;
 
 function kit(?string $target = null): UiKit
 {
@@ -65,7 +66,27 @@ test('a layout\'s regions are the markers in its stub', function () {
         ->and($layouts['carte']['regions'])->toBe(['nav', 'lead', 'offer', 'visit', 'main', 'band', 'footer'])
         ->and($layouts['poster']['regions'])->toBe(['nav', 'hero', 'facts', 'main', 'footer'])
         ->and($layouts['board']['regions'])->toBe(['nav', 'hero', 'main', 'footer'])
-        ->and($layouts['journal']['regions'])->toBe(['nav', 'hero', 'story', 'gallery', 'main', 'footer']);
+        ->and($layouts['journal']['regions'])->toBe(['nav', 'hero', 'story', 'gallery', 'main', 'footer'])
+        ->and($layouts['focus']['regions'])->toBe(['header', 'main'])
+        ->and($layouts['stacked']['regions'])->toBe(['nav', 'header', 'main'])
+        ->and($layouts['workspace']['regions'])->toBe(['rail', 'list', 'detail']);
+});
+
+// specimen needs its reference, and a layout writes every tag bare: placed,
+// it is a page that answers 500 on every request.
+test('a component that cannot render bare is refused, naming what it needs', function () {
+    kit()->render('marketing', ['main' => ['specimen']]);
+})->throws(InvalidArgumentException::class, '<x-kit.specimen /> needs reference');
+
+test('ui:list --json gives deployer the kit apart from the reference library, and each prefab with what it draws', function () {
+    Artisan::call('ui:list', ['--json' => true]);
+    $list = json_decode(Artisan::output(), true);
+
+    expect($list['components'])->toHaveKeys(['hero', 'menu', 'site-header'])
+        ->and(collect($list['components'])->pluck('blade')->every(fn (string $blade): bool => str_starts_with($blade, 'kit/')))->toBeTrue()
+        ->and($list['references'])->toHaveKey('layout/cards/01-basic-card')
+        ->and($list['references'])->not->toHaveKey('hero')
+        ->and($list['prefabs'])->toMatchArray(['hours' => ['schedule'], 'menu' => ['menu'], 'booking' => ['booking']]);
 });
 
 // hero and band were added to marketing later; a schema written before them

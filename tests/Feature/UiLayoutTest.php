@@ -124,3 +124,28 @@ test('a page built with bare tags names the business in its header and footer fr
     expect(trim($story->evaluate('string(//*[@data-kit-part="site-header-brand"])')))->toBe('Chez Favre')
         ->and(trim($story->evaluate('string(//*[@data-kit-part="site-footer-brand"])')))->toBe('Boulangerie Favre');
 });
+
+test('--description gives the page its meta description', function () {
+    aMockup('pages.menu', ['layout' => 'carte', 'regions' => ['lead' => ['section']]]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/pages.menu.json', '--view' => 'pages.menu', '--path' => '/menu', '--description' => 'La carte de saison.'])
+        ->assertSuccessful();
+
+    expect(collect(app(Pages::class)->all())->firstWhere('view', 'pages.menu')['description'])->toBe('La carte de saison.');
+});
+
+// Each prefab's tag is written bare, so each has to draw the site's rows, or
+// none, from its own tables alone: one that throws is every request a 500.
+test('a page of all nine prefabs, built bare and migrated, answers', function () {
+    aMockup('welcome', ['layout' => 'marketing', 'regions' => [
+        'main' => ['menu', 'schedule', 'catalogue', 'map', 'gallery', 'team', 'events', 'faq', 'booking'],
+    ]]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/welcome.json', '--path' => '/'])->assertSuccessful();
+    $this->artisan('migrate')->assertSuccessful();
+    app(Pages::class)->routes();
+    Route::getRoutes()->refreshNameLookups();
+    $this->withoutVite();
+
+    $this->get('/')->assertOk();
+});

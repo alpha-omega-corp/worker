@@ -13,7 +13,18 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # The base (alpha-omega-corp/site) is a private repository: the secret is
+    # {"github-oauth": {"github.com": "<token>"}}, set on the site's repository.
+    env:
+      COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+
     steps:
+      - name: Check the base can be installed
+        if: env.COMPOSER_AUTH == ''
+        run: |
+          echo "::error::The COMPOSER_AUTH secret is not set, so composer cannot install alpha-omega-corp/site. Add it under Settings → Secrets and variables → Actions."
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

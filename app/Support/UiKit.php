@@ -285,7 +285,14 @@ class UiKit
             throw new InvalidArgumentException("The {$layout} layout has no region called [".implode(', ', $unknown).']. It has: '.implode(', ', $layouts[$layout]['regions']).'.');
         }
 
-        $this->closure(array_merge([], ...array_values($regions)));
+        $placed = array_values(array_unique(array_merge([], ...array_values($regions))));
+        $this->closure($placed);
+
+        foreach ($placed as $name) {
+            if (($needs = $this->requiredProps($name)) !== []) {
+                throw new InvalidArgumentException('<'.$this->tag($name).' /> needs '.implode(' and ', $needs).', and a layout writes every tag bare: the page would answer 500 on every request. Leave it out of the schema.');
+            }
+        }
 
         $stub = $this->files->get(base_path("stubs/layouts/{$layout}.blade.php"));
 
@@ -306,6 +313,42 @@ class UiKit
     public function tag(string $name): string
     {
         return 'x-'.str_replace('/', '.', $this->components()[$name]['blade']);
+    }
+
+    /**
+     * What a component cannot render without: each prop its `@props` names with
+     * no default, read off the package's file — deployer's own reading, so the
+     * two refuse the same components. None without the package.
+     *
+     * @return list<string>
+     */
+    public function requiredProps(string $name): array
+    {
+        $package = InstalledVersions::isInstalled(self::PACKAGE) ? InstalledVersions::getInstallPath(self::PACKAGE) : null;
+        $file = "{$package}/resources/views/components/{$this->components()[$name]['blade']}.blade.php";
+
+        if ($package === null || ! $this->files->exists($file) || preg_match('/@props\(\[(.*?)\]\)/s', $this->files->get($file), $props) !== 1) {
+            return [];
+        }
+
+        // `@props(['reference'])` has no default at all; otherwise one prop a
+        // line, and a line that is only a name has none.
+        preg_match_all(
+            str_contains($props[1], '=>') ? "/^\\s*'([A-Za-z_]\\w*)'\\s*,?\\s*$/m" : "/'([A-Za-z_]\\w*)'/",
+            $props[1],
+            $names,
+        );
+
+        return $names[1];
+    }
+
+    /**
+     * Whether a component is the themed kit's, which a layout is built from,
+     * rather than one of the raw reference library's.
+     */
+    public function isKit(string $name): bool
+    {
+        return str_starts_with($this->components()[$name]['blade'] ?? '', 'kit/');
     }
 
     private function package(): string

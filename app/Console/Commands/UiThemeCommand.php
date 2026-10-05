@@ -94,6 +94,14 @@ class UiThemeCommand extends Command
         $this->table(['View', 'Page', 'Mockup'], $rows);
         $this->components->info('Every page is drawn in '.self::said($palette, $direction).'. Vite loads the faces of the palettes the mockups name on its next build.');
 
+        // A picture from deployer's library is saved with the page's colours
+        // written into it, so the new look does not reach it.
+        $pictures = array_map(fn (string $path): string => substr($path, strlen(public_path()) + 1), $files->glob(public_path('images/*/*.svg')));
+
+        if ($pictures !== []) {
+            $this->components->warn('These pictures are still drawn in the old look; take each again from deployer\'s library (get-ui-picture with replace): '.implode(', ', $pictures).'.');
+        }
+
         return self::SUCCESS;
     }
 

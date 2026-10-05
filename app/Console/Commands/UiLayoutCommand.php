@@ -42,6 +42,7 @@ use Throwable;
     {--title= : The page\'s title, which the head shows as "Title · Name"}
     {--label= : The page\'s item in the navigation}
     {--role= : The page\'s job on the site, e.g. offer}
+    {--description= : The page\'s meta description}
     {--replace : Build the view again if it exists, replacing what was written in it and nothing else}
     {--force : Overwrite the view, and any component the application already has}')]
 #[Description('Render a layout with kit components placed in its regions, in its palette and direction, importing what they need')]

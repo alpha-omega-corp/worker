@@ -95,3 +95,14 @@ test('with no look given it says what each page is drawn in, and fails while the
         ->expectsOutputToContain('The pages are not drawn in one look')
         ->assertFailed();
 });
+
+test('the pictures a new look does not reach are named', function () {
+    aMockup('welcome', ['layout' => 'marketing', 'theme' => 'orchard', 'regions' => (object) []]);
+    aFilledView('welcome', '<html lang="fr" data-palette="orchard">', '<p>Pain</p>');
+    File::ensureDirectoryExists(public_path('images/bakery-linocut'));
+    File::put(public_path('images/bakery-linocut/loaf.svg'), '<svg/>');
+
+    $this->artisan('ui:theme', ['palette' => 'harbour'])
+        ->expectsOutputToContain('images/bakery-linocut/loaf.svg')
+        ->assertSuccessful();
+});
