@@ -16,14 +16,14 @@
                 {{-- region:lead --}}
             </div>
 
-            {{-- The offer and the visit side by side on a wide screen, the visit held in view while the list scrolls; on a phone the visit comes after the offer. --}}
+            {{-- The offer and the visit side by side on a wide screen, the visit held in view while the list scrolls, below the sticky site header: 9rem down, where the kit stops anchored sections too; on a phone the visit comes after the offer. --}}
             <div class="py-12 sm:py-16 [&:not(:has(>div>*>*))]:hidden">
                 <div class="wrap grid items-start gap-12 lg:[&:has(>aside>*)]:grid-cols-[minmax(0,1fr)_22rem]">
                     <div class="min-w-0 space-y-16 [&:not(:has(>*))]:hidden">
                         {{-- region:offer --}}
                     </div>
 
-                    <aside class="min-w-0 space-y-6 lg:sticky lg:top-6 [&:not(:has(>*))]:hidden">
+                    <aside class="min-w-0 space-y-6 lg:sticky lg:top-36 [&:not(:has(>*))]:hidden">
                         {{-- region:visit --}}
                     </aside>
                 </div>

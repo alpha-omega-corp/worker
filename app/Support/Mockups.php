@@ -7,14 +7,16 @@ use Illuminate\Support\Facades\File;
 /**
  * The mockups a site's pages are built from: resources/layouts/<view>.json, one
  * per view, which deployer draws on its Design tab and ui:layout builds. A
- * schema is `layout` and `regions`, which the build places; `theme` and
- * `direction`, the look it puts on the page's <html>; `business`; and
- * `builtAs`, the version of it the view was last built at. Deployer reads a page
- * as built while its `builtAs` is the version of what the file says now.
+ * schema is `layout` and `regions`, which the build places; `variants`, each
+ * component's arrangement, and `themePicker`, whether the site header offers
+ * the theme picker, which it writes on their tags; `theme` and `direction`, the
+ * look it puts on the page's <html>; `business`; and `builtAs`, the version of
+ * it the view was last built at. Deployer reads a page as built while its
+ * `builtAs` is the version of what the file says now.
  *
  * Both write the file, so this writes it as deployer does — four spaces, a
- * trailing newline, the regions an object — and replaces it whole, so the Design
- * tab's poll never reads half of one.
+ * trailing newline, the regions and the arrangements objects — and replaces it
+ * whole, so the Design tab's poll never reads half of one.
  */
 class Mockups
 {
@@ -78,15 +80,25 @@ class Mockups
         // `{}` with no region, never `[]`: deployer reads a list as no schema at all.
         $schema['regions'] = (object) ($schema['regions'] ?? []);
 
+        // The arrangements likewise, and none is no key, as deployer leaves it
+        // out: an empty object decodes to `[]` and would go back out as a list.
+        if (($schema['variants'] ?? []) === []) {
+            unset($schema['variants']);
+        } elseif (is_array($schema['variants'])) {
+            $schema['variants'] = (object) $schema['variants'];
+        }
+
         File::replace($this->path($view), json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n");
     }
 
     /**
-     * What a build writes — the layout, the palette, the direction and the
-     * regions — as the first six bytes of its SHA-256: deployer's
-     * `uikit.version`, byte for byte. An empty region is left out, and so is a
-     * palette or a direction that is not there, which is why a mockup built
-     * before directions existed still reads built.
+     * What a build writes — the layout, the palette, the direction, the
+     * regions, the arrangements and the theme picker — as the first six bytes
+     * of its SHA-256: deployer's `uikit.version`, byte for byte. An empty
+     * region is left out, and so is a palette or a direction that is not there,
+     * an empty arrangement and a picker not asked for, which is why a mockup
+     * built before directions, arrangements or the picker existed still reads
+     * built.
      *
      * @param  array<string, mixed>  $schema
      */
@@ -104,6 +116,17 @@ class Mockups
         }
 
         $written['regions'] = (object) $placed;
+
+        $variants = array_filter((array) ($schema['variants'] ?? []), fn (mixed $word): bool => is_string($word) && $word !== '');
+        ksort($variants, SORT_STRING);
+
+        if ($variants !== []) {
+            $written['variants'] = (object) $variants;
+        }
+
+        if (($schema['themePicker'] ?? false) === true) {
+            $written['themePicker'] = true;
+        }
 
         return substr(hash('sha256', json_encode($written, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)), 0, 12);
     }

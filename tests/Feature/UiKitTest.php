@@ -167,6 +167,21 @@ test('each component is written into its region, at the region\'s indentation', 
         ->not->toContain('region:');
 });
 
+// A tag given neither is written as before them, so a page that built then
+// builds to the same bytes.
+test('a component given an arrangement carries it, and the site header the theme picker after it', function () {
+    $page = kit()->render('marketing', ['nav' => ['site-header'], 'hero' => ['hero'], 'main' => ['section'], 'footer' => ['site-footer']], variants: [
+        'site-header' => 'centred', 'hero' => 'cover', 'section' => '', 'site-footer' => 'compact',
+    ], themePicker: true);
+
+    expect($page)->toContain(
+        '<x-kit.site-header variant="centred" :theme-picker="true" />',
+        '<x-kit.hero variant="cover" />',
+        '<x-kit.section />',
+        '<x-kit.site-footer variant="compact" />',
+    );
+});
+
 test('a region the layout does not have is refused', function () {
     kit()->render('console', ['sidebar' => ['side-nav']]);
 })->throws(InvalidArgumentException::class, 'no region called [sidebar]');

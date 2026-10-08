@@ -8,6 +8,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+{{-- The theme the visitor picked in the header (a plain `theme` cookie, resources/js/app.js), on <html> before the page paints. --}}
+<script>(m => m && (document.documentElement.dataset.theme = m[1]))(document.cookie.match(/(?:^|; )theme=(light|dark)(?:;|$)/));</script>
+
 <x-site::head :title="$sitePage['title'] ?? null" :description="$sitePage['description'] ?? null" />
 
 <link rel="icon" href="/favicon.ico" sizes="any">

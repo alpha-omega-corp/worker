@@ -58,9 +58,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * The site header and the site footer of every page name the business from
      * the base's identity, which the owner keeps at /admin, wherever the tag
-     * leaves it out: the name, and the footer's address, phone and email. So no
-     * page is built with a header that leads nowhere, and none drifts from the
-     * others by a contact line. What a tag gives still wins.
+     * leaves it out: the name, and the footer's address, phone and email —
+     * and the footer's credit to apdigital, who made it. So no page is built
+     * with a header that leads nowhere, and none drifts from the others by a
+     * contact line. What a tag gives still wins.
      */
     protected function configureSiteChrome(): void
     {
@@ -69,7 +70,11 @@ class AppServiceProvider extends ServiceProvider
             $defaults = ['brand' => $identity->name];
 
             if ($view->name() === 'components.kit.site-footer') {
-                $defaults += ['address' => $identity->address(), 'phone' => $identity->phone, 'email' => $identity->email];
+                $defaults += [
+                    'address' => $identity->address(), 'phone' => $identity->phone, 'email' => $identity->email,
+                    // Who made the site, at the foot of every page: the maker's name, site and mark (public/apdigital.svg).
+                    'credit' => ['name' => 'apdigital.ch', 'href' => 'https://apdigital.ch', 'logo' => '/apdigital.svg'],
+                ];
             }
 
             foreach ($defaults as $prop => $value) {

@@ -50,6 +50,7 @@ return [
     // mallardduck/blade-lucide-icons, which the application requires for production.
     'icon' => ['requires' => [], 'js' => null, 'blade' => 'kit/icon'],
     'input' => ['requires' => [], 'js' => null, 'blade' => 'kit/input'],
+    'language-picker' => ['requires' => [], 'js' => null, 'blade' => 'kit/language-picker'],
     'map' => ['requires' => ['icon'], 'js' => null, 'blade' => 'kit/map'],
     'media' => ['requires' => [], 'js' => null, 'blade' => 'kit/media'],
     'menu' => ['requires' => [], 'js' => null, 'blade' => 'kit/menu'],
@@ -68,7 +69,8 @@ return [
     'side-nav' => ['requires' => [], 'js' => null, 'blade' => 'kit/side-nav'],
     'sign-in' => ['requires' => [], 'js' => null, 'blade' => 'kit/sign-in'],
     'site-footer' => ['requires' => ['icon'], 'js' => null, 'blade' => 'kit/site-footer'],
-    'site-header' => ['requires' => ['icon'], 'js' => null, 'blade' => 'kit/site-header'],
+    // Draws the theme and language menus by itself; resources/js/app.js applies a theme choice.
+    'site-header' => ['requires' => ['icon', 'theme-picker', 'language-picker'], 'js' => null, 'blade' => 'kit/site-header'],
     'specimen' => ['requires' => [], 'js' => null, 'blade' => 'kit/specimen'],
     'stacked-list' => ['requires' => [], 'js' => null, 'blade' => 'kit/stacked-list'],
     'stat' => ['requires' => [], 'js' => null, 'blade' => 'kit/stat'],
@@ -76,6 +78,7 @@ return [
     'tabs' => ['requires' => ['badge'], 'js' => null, 'blade' => 'kit/tabs'],
     'team' => ['requires' => [], 'js' => null, 'blade' => 'kit/team'],
     'textarea' => ['requires' => [], 'js' => null, 'blade' => 'kit/textarea'],
+    'theme-picker' => ['requires' => ['icon'], 'js' => null, 'blade' => 'kit/theme-picker'],
     'toggle' => ['requires' => [], 'js' => null, 'blade' => 'kit/toggle'],
     'vertical-nav' => ['requires' => ['badge'], 'js' => null, 'blade' => 'kit/vertical-nav'],
 

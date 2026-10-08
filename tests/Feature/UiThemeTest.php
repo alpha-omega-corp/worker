@@ -70,6 +70,24 @@ test('--direction= takes the direction off every page and keeps the palette', fu
         ->and(mockupOf('welcome'))->toBe(['layout' => 'marketing', 'theme' => 'orchard', 'regions' => $home['regions'], 'builtAs' => '6ba0e5a8fe0c']);
 });
 
+test('a page\'s arrangements and theme picker are kept in the new look, and digested with it', function () {
+    $home = ['layout' => 'marketing', 'theme' => 'orchard', 'direction' => 'counter', 'regions' => [
+        'nav' => ['site-header'], 'hero' => ['hero'], 'main' => [], 'footer' => ['site-footer'],
+    ], 'variants' => ['site-header' => 'centred', 'hero' => 'cover', 'site-footer' => 'compact'], 'themePicker' => true];
+
+    // b38b04c781c8 is deployer's version of the home page as it was built.
+    aMockup('welcome', [...$home, 'builtAs' => 'b38b04c781c8']);
+    aMockup('pages.draft', ['layout' => 'board', 'theme' => 'orchard', 'regions' => (object) [], 'variants' => (object) []]);
+    aFilledView('welcome', '<html lang="fr" data-palette="orchard" data-direction="counter">', '<p>Pain</p>');
+
+    $this->artisan('ui:theme', ['palette' => 'harbour', '--direction' => 'hearth'])->assertSuccessful();
+
+    // 5fa2ee3e6c7a is deployer's version of the home page in the new look, its
+    // arrangements and picker in it. No arrangement is no key, never a list.
+    expect(mockupOf('welcome'))->toBe([...$home, 'theme' => 'harbour', 'direction' => 'hearth', 'builtAs' => '5fa2ee3e6c7a'])
+        ->and(mockupOf('pages.draft'))->not->toHaveKey('variants');
+});
+
 test('a look the kit does not draw is refused, and nothing is written', function (array $arguments, string $said) {
     aMockup('welcome', ['layout' => 'marketing', 'theme' => 'orchard', 'regions' => (object) []]);
     aFilledView('welcome', '<html lang="fr" data-palette="orchard">', '<p>Pain</p>');

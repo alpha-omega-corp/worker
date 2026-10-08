@@ -1,6 +1,7 @@
 <?php
 
 use AlphaOmega\Site\Content\Content;
+use App\Support\Mockups;
 use App\Support\Pages;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,48 @@ test('a palette the kit does not draw is refused, and nothing is written', funct
         ->and(mockupOf('pages.menu'))->not->toHaveKey('builtAs');
 });
 
+// A site hands every page the same frame, so a page with no hero or header is
+// still given their arrangements and the picker.
+test('a page is built in its mockup\'s arrangements, passing over a part it does not place and the picker on a page with no header', function () {
+    aMockup('pages.menu', ['layout' => 'carte', 'regions' => ['lead' => ['section']], 'variants' => ['section' => 'split', 'hero' => 'cover'], 'themePicker' => true]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/pages.menu.json', '--view' => 'pages.menu'])->assertSuccessful();
+
+    expect(file_get_contents(resource_path('views/pages/menu.blade.php')))->toContain('<x-kit.section variant="split" />')
+        ->not->toContain('variant="cover"')
+        ->not->toContain('theme-picker');
+});
+
+test('the arrangements and the picker are digested as deployer digests them, and a schema with neither as before them', function () {
+    $schema = ['layout' => 'marketing', 'theme' => 'orchard', 'direction' => 'counter', 'regions' => [
+        'nav' => ['site-header'], 'hero' => ['hero'], 'main' => [], 'footer' => ['site-footer'],
+    ]];
+
+    // Each the digest deployer's uikit.version gives.
+    expect(Mockups::version([...$schema, 'variants' => ['site-header' => 'centred', 'hero' => 'cover', 'site-footer' => 'compact'], 'themePicker' => true]))->toBe('b38b04c781c8')
+        ->and(Mockups::version($schema))->toBe('e1045ae0dd96')
+        ->and(Mockups::version([...$schema, 'variants' => ['hero' => ''], 'themePicker' => false]))->toBe('e1045ae0dd96');
+});
+
+// The word lands in an attribute, so only that is asked of it: whether the
+// component draws it is deployer's to check before it saves.
+test('an arrangement that is not a word, variants that are not an object or a picker that is not a boolean is refused, and nothing is written', function (array $given, string $said) {
+    aMockup('welcome', ['layout' => 'marketing', 'regions' => ['nav' => ['site-header'], 'hero' => ['hero']], ...$given]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/welcome.json'])
+        ->expectsOutputToContain($said)
+        ->assertFailed();
+
+    expect(resource_path('views/welcome.blade.php'))->not->toBeFile()
+        ->and(resource_path('views/components/kit/hero.blade.php'))->not->toBeFile()
+        ->and(mockupOf('welcome'))->not->toHaveKey('builtAs');
+})->with([
+    'a word that is not one' => [['variants' => ['hero' => 'Cover!']], 'The arrangement [Cover!] for hero is not a word'],
+    'variants that are a list' => [['variants' => ['cover']], 'variants is a list'],
+    'variants that are a word' => [['variants' => 'cover'], 'The schema reads'],
+    'a picker that is not a boolean' => [['themePicker' => 'yes'], 'The schema reads'],
+]);
+
 test('on the base, the prefabs a page places are switched on, and building it again finds them on', function () {
     aMockup('welcome', ['layout' => 'split', 'regions' => ['visit' => ['schedule', 'map']]]);
 
@@ -123,6 +166,35 @@ test('a page built with bare tags names the business in its header and footer fr
 
     expect(trim($story->evaluate('string(//*[@data-kit-part="site-header-brand"])')))->toBe('Chez Favre')
         ->and(trim($story->evaluate('string(//*[@data-kit-part="site-footer-brand"])')))->toBe('Boulangerie Favre');
+});
+
+// The frame end to end: written on the tags by the command, stamped with
+// deployer's digest, and drawn by the kit's own components when the page is
+// served — the theme menu among them, since the base binds it.
+test('a page built in its frame is served in it, its header offering the theme picker', function () {
+    Content::save('identity', ['name' => 'Boulangerie Favre']);
+    aMockup('pages.visit', ['layout' => 'marketing', 'theme' => 'orchard', 'direction' => 'counter', 'regions' => [
+        'nav' => ['site-header'], 'hero' => ['hero'], 'main' => [], 'footer' => ['site-footer'],
+    ], 'variants' => ['site-header' => 'centred', 'hero' => 'cover', 'site-footer' => 'compact'], 'themePicker' => true]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/pages.visit.json', '--view' => 'pages.visit', '--path' => '/visit'])->assertSuccessful();
+
+    expect(file_get_contents(resource_path('views/pages/visit.blade.php')))
+        ->toContain('<x-kit.site-header variant="centred" :theme-picker="true" />', '<x-kit.hero variant="cover" />', '<x-kit.site-footer variant="compact" />')
+        ->and(mockupOf('pages.visit')['builtAs'])->toBe('b38b04c781c8');
+
+    app(Pages::class)->routes();
+    Route::getRoutes()->refreshNameLookups();
+    $this->withoutVite();
+
+    $document = new DOMDocument;
+    $document->loadHTML((string) $this->get('/visit')->assertOk()->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+    $page = new DOMXPath($document);
+
+    expect($page->evaluate('string(//*[@data-kit="site-header"]/@data-variant)'))->toBe('centred')
+        ->and($page->evaluate('string(//*[@data-kit="hero"]/@data-variant)'))->toBe('cover')
+        ->and($page->evaluate('string(//*[@data-kit="site-footer"]/@data-variant)'))->toBe('compact')
+        ->and($page->evaluate('count(//*[@data-kit="theme-picker"])'))->toBeGreaterThan(0);
 });
 
 test('--description gives the page its meta description', function () {

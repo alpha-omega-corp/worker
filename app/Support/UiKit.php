@@ -13,7 +13,8 @@ use Symfony\Component\Finder\SplFileInfo;
  * placed into (stubs/layouts), which palettes and directions a page can be drawn
  * in (the kit's themes.css and kit.css), and the two acts built on those —
  * importing a set of components with everything they require, and rendering a
- * layout with the components in their regions, in its palette and direction.
+ * layout with the components in their regions and arrangements, in its palette
+ * and direction.
  *
  * The markup itself stays in the ui-kit package; this copies it into the
  * application, where it becomes the application's own to edit.
@@ -42,6 +43,12 @@ class UiKit
      * since the stubs' `lang` holds Blade with a `->` in it.
      */
     private const HTML = '/<html\b(?:[^>"\']|"[^"]*"|\'[^\']*\')*>/';
+
+    /**
+     * An arrangement, as a schema names one. It is written into the tag as
+     * `variant="…"`, so it is a word: nothing in it can end the attribute.
+     */
+    private const WORD = '/^[a-z][a-z0-9-]*$/D';
 
     public function __construct(private Filesystem $files, private ?string $target = null) {}
 
@@ -267,11 +274,21 @@ class UiKit
      * stub's own palette and no direction otherwise. A region nothing was
      * placed in is left empty.
      *
-     * @param  array<string, list<string>>  $regions
+     * A component given an arrangement carries it as `variant`, and the site
+     * header carries `:theme-picker` when the picker is asked for. Any other
+     * tag is written bare, as before either existed, so a page that built then
+     * builds to the same bytes. An arrangement for a component the page does
+     * not place is passed over, since a site hands every page the same frame.
+     * The word is not checked against what the component draws — the
+     * component ignores one it does not take, and deployer asks before it
+     * saves — only that it is a word, because it lands in an attribute.
      *
-     * @throws InvalidArgumentException for a layout, a region, a component, a palette or a direction there is not
+     * @param  array<string, list<string>>  $regions
+     * @param  array<mixed>  $variants  each component's arrangement by its name, as the schema gives it; an empty one is none
+     *
+     * @throws InvalidArgumentException for a layout, a region, a component, a palette or a direction there is not, or an arrangement that is not a word
      */
-    public function render(string $layout, array $regions, ?string $palette = null, ?string $direction = null): string
+    public function render(string $layout, array $regions, ?string $palette = null, ?string $direction = null, array $variants = [], bool $themePicker = false): string
     {
         $layouts = $this->layouts();
 
@@ -294,10 +311,25 @@ class UiKit
             }
         }
 
+        if ($variants !== [] && array_is_list($variants)) {
+            throw new InvalidArgumentException('variants is a list, and it names each arrangement by the component it is for: {"hero": "cover"}.');
+        }
+
+        foreach ($variants as $name => $word) {
+            if (! is_string($word) || ($word !== '' && preg_match(self::WORD, $word) !== 1)) {
+                throw new InvalidArgumentException('The arrangement ['.(is_string($word) ? $word : json_encode($word)).'] for '.$name.' is not a word: it is written into the tag as variant="…", so it is lowercase letters, digits and hyphens, starting with a letter.');
+            }
+        }
+
         $stub = $this->files->get(base_path("stubs/layouts/{$layout}.blade.php"));
 
-        $page = (string) preg_replace_callback(self::REGION, function (array $match) use ($regions): string {
-            $tags = array_map(fn (string $name): string => $match[1].'<'.$this->tag($name).' />', $regions[$match[2]] ?? []);
+        $page = (string) preg_replace_callback(self::REGION, function (array $match) use ($regions, $variants, $themePicker): string {
+            $tags = array_map(function (string $name) use ($match, $variants, $themePicker): string {
+                $variant = ($variants[$name] ?? '') === '' ? '' : " variant=\"{$variants[$name]}\"";
+                $picker = $themePicker && $name === 'site-header' ? ' :theme-picker="true"' : '';
+
+                return $match[1].'<'.$this->tag($name).$variant.$picker.' />';
+            }, $regions[$match[2]] ?? []);
 
             return implode("\n", $tags);
         }, $stub);

@@ -29,6 +29,7 @@ A broken entry is skipped and logged rather than answered with a 500, and a page
 `ui:layout` builds a page whole from its mockup, whoever runs it — deployer's Build, a session, or a person:
 
 - the layout's stub, each component's tag in its region and every component imported with what it requires;
+- the mockup's `variants`, each component's arrangement, on its tag (`<x-kit.hero variant="cover" />`), and with `themePicker` the theme picker on the site header's (`:theme-picker="true"`); any other tag is written bare;
 - the mockup's `theme` and `direction` on the page's `<html>` (`data-palette`, `data-direction`), refused unless the kit's `themes.css` and `kit.css` draw them;
 - on the base, the prefabs it places switched on (`site:prefab enable`): run `php artisan migrate` when it says so;
 - built from its own mockup, the mockup marked `builtAs` exactly as deployer marks it, so the Design tab reads the page as built.
