@@ -18,7 +18,7 @@
                     {{-- region:hero --}}
                 </div>
 
-                <div class="mx-auto grid w-full max-w-(--container-wrap) gap-8 border-t border-rule px-5 pt-8 md:grid-cols-2 md:px-10 [&:not(:has(>*))]:hidden">
+                <div class="mx-auto grid w-full max-w-(--container-wrap) gap-8 [--gap:2rem] border-t border-rule px-5 pt-8 md:grid-cols-2 md:[--cols:2] md:px-10 [&:not(:has(>*))]:hidden">
                     {{-- region:facts --}}
                 </div>
             </section>

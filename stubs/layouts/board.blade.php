@@ -20,7 +20,7 @@
             </section>
 
             <div class="wrap pb-16 [&:not(:has(>div>*))]:hidden">
-                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:[&>:first-child]:col-span-2 lg:[&>:first-child]:row-span-2 [&>*]:min-w-0">
+                <div class="grid gap-6 [--gap:1.5rem] sm:grid-cols-2 sm:[--cols:2] lg:grid-cols-3 lg:[--cols:3] lg:[&>:first-child]:col-span-2 lg:[&>:first-child]:row-span-2 [&>*]:min-w-0">
                     {{-- region:main --}}
                 </div>
             </div>

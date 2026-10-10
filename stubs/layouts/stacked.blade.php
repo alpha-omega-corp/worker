@@ -17,7 +17,7 @@
             </div>
         </header>
 
-        <main id="main" tabindex="-1" class="mx-auto grid max-w-7xl gap-6 px-4 py-8 outline-none sm:px-6 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
+        <main id="main" tabindex="-1" class="mx-auto grid max-w-7xl gap-6 [--gap:1.5rem] px-4 py-8 outline-none sm:px-6 md:grid-cols-2 md:[--cols:2] lg:grid-cols-3 lg:[--cols:3] lg:px-8">
             {{-- region:main --}}
         </main>
     </body>

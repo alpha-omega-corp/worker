@@ -18,7 +18,7 @@ use Throwable;
 /**
  * Build a page from a layout schema, whole: import every component it places,
  * with what they require; write the layout's stub with each component in its
- * region and its arrangement, the site header offering the theme picker when
+ * region with its arrangement and its row, the site header offering the theme picker when
  * the schema asks, on an <html> in the schema's palette and direction; and, on
  * the base, switch on the prefabs it places, so their bare tags draw the site's
  * own rows.
@@ -63,11 +63,11 @@ class UiLayoutCommand extends Command
             return self::FAILURE;
         }
 
-        /** @var array{layout?: mixed, regions?: mixed, theme?: mixed, direction?: mixed, variants?: mixed, themePicker?: mixed}|null $decoded */
+        /** @var array{layout?: mixed, regions?: mixed, theme?: mixed, direction?: mixed, variants?: mixed, themePicker?: mixed, rows?: mixed}|null $decoded */
         $decoded = json_decode($files->get($schema), true);
 
-        if (! is_string($decoded['layout'] ?? null) || ! is_array($decoded['regions'] ?? []) || ! is_array($decoded['variants'] ?? []) || ! is_bool($decoded['themePicker'] ?? false)) {
-            $this->components->error('The schema reads {"layout": "<name>", "theme": "<palette>", "direction": "<direction>", "regions": {"<region>": ["<component>", …]}, "variants": {"<component>": "<arrangement>"}, "themePicker": true|false}.');
+        if (! is_string($decoded['layout'] ?? null) || ! is_array($decoded['regions'] ?? []) || ! is_array($decoded['variants'] ?? []) || ! is_bool($decoded['themePicker'] ?? false) || ! is_array($decoded['rows'] ?? [])) {
+            $this->components->error('The schema reads {"layout": "<name>", "theme": "<palette>", "direction": "<direction>", "regions": {"<region>": ["<component>", …]}, "variants": {"<component>": "<arrangement>"}, "themePicker": true|false, "rows": {"<region>": ["" | "row" | "center", …]}}.');
 
             return self::FAILURE;
         }
@@ -89,7 +89,7 @@ class UiLayoutCommand extends Command
             // Refused before anything is written: a page that cannot be routed
             // leaves no view behind to be found later with no path to it.
             $manifest = $changes === [] ? null : $pages->with($name, $changes);
-            $page = $kit->render($decoded['layout'], $regions, self::named($decoded['theme'] ?? null), self::named($decoded['direction'] ?? null), $decoded['variants'] ?? [], $decoded['themePicker'] ?? false);
+            $page = $kit->render($decoded['layout'], $regions, self::named($decoded['theme'] ?? null), self::named($decoded['direction'] ?? null), $decoded['variants'] ?? [], $decoded['themePicker'] ?? false, $decoded['rows'] ?? []);
             $placed = array_merge([], ...array_values($regions));
             $result = $kit->import($placed, (bool) $this->option('force'));
         } catch (InvalidArgumentException $e) {

@@ -3,6 +3,7 @@
 use AlphaOmega\Site\Content\Content;
 use App\Support\Mockups;
 use App\Support\Pages;
+use App\Support\UiKit;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
@@ -85,6 +86,23 @@ test('the arrangements and the picker are digested as deployer digests them, and
     expect(Mockups::version([...$schema, 'variants' => ['site-header' => 'centred', 'hero' => 'cover', 'site-footer' => 'compact'], 'themePicker' => true]))->toBe('b38b04c781c8')
         ->and(Mockups::version($schema))->toBe('e1045ae0dd96')
         ->and(Mockups::version([...$schema, 'variants' => ['hero' => ''], 'themePicker' => false]))->toBe('e1045ae0dd96');
+});
+
+test('the rows are digested as deployer digests them, and a schema with none as before them', function () {
+    $board = ['layout' => 'board', 'theme' => 'orchard', 'regions' => ['main' => ['menu', 'map', 'media']]];
+
+    // Each the digest deployer's uikit.version gives.
+    expect(Mockups::version([...$board, 'rows' => ['main' => ['', 'row', 'center', '']]]))->toBe('68da6929b14f')
+        ->and(Mockups::version([...$board, 'rows' => ['main' => ['', ''], 'hero' => []]]))->toBe(Mockups::version($board));
+});
+
+test('a page is built with its rows on its tags', function () {
+    aMockup('pages.visit', ['layout' => 'board', 'regions' => ['main' => ['section', 'map']], 'rows' => ['main' => ['', 'center']]]);
+
+    $this->artisan('ui:layout', ['schema' => 'resources/layouts/pages.visit.json', '--view' => 'pages.visit'])->assertSuccessful();
+
+    expect(file_get_contents(resource_path('views/pages/visit.blade.php')))
+        ->toContain('<x-kit.section />', '<x-kit.map class="'.UiKit::ROWS['center'].'" />');
 });
 
 // The word lands in an attribute, so only that is asked of it: whether the

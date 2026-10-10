@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\File;
  * per view, which deployer draws on its Design tab and ui:layout builds. A
  * schema is `layout` and `regions`, which the build places; `variants`, each
  * component's arrangement, and `themePicker`, whether the site header offers
- * the theme picker, which it writes on their tags; `theme` and `direction`, the
+ * the theme picker, which it writes on their tags; `rows`, which parts take a
+ * row of their own in a grid region, written on theirs as a class; `theme` and `direction`, the
  * look it puts on the page's <html>; `business`; and `builtAs`, the version of
  * it the view was last built at. Deployer reads a page as built while its
  * `builtAs` is the version of what the file says now.
@@ -88,6 +89,12 @@ class Mockups
             $schema['variants'] = (object) $schema['variants'];
         }
 
+        if (($schema['rows'] ?? []) === []) {
+            unset($schema['rows']);
+        } elseif (is_array($schema['rows'])) {
+            $schema['rows'] = (object) $schema['rows'];
+        }
+
         File::replace($this->path($view), json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)."\n");
     }
 
@@ -98,7 +105,7 @@ class Mockups
      * region is left out, and so is a palette or a direction that is not there,
      * an empty arrangement and a picker not asked for, which is why a mockup
      * built before directions, arrangements or the picker existed still reads
-     * built.
+     * built — and the rows after them, the same way.
      *
      * @param  array<string, mixed>  $schema
      */
@@ -126,6 +133,28 @@ class Mockups
 
         if (($schema['themePicker'] ?? false) === true) {
             $written['themePicker'] = true;
+        }
+
+        // Each region's words with the empty ones at its end taken off, and a
+        // region with none left out: deployer's uikit.RowsOf.
+        $rows = [];
+
+        foreach ((array) ($schema['rows'] ?? []) as $region => $words) {
+            $words = is_array($words) ? array_values($words) : [];
+
+            while ($words !== [] && end($words) === '') {
+                array_pop($words);
+            }
+
+            if ($words !== []) {
+                $rows[$region] = $words;
+            }
+        }
+
+        ksort($rows, SORT_STRING);
+
+        if ($rows !== []) {
+            $written['rows'] = (object) $rows;
         }
 
         return substr(hash('sha256', json_encode($written, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)), 0, 12);

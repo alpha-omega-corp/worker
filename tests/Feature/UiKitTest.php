@@ -182,6 +182,36 @@ test('a component given an arrangement carries it, and the site header the theme
     );
 });
 
+// A part with a row carries it as its class, after its arrangement — the
+// classes deployer's drawing puts on the part, byte for byte — and the row is
+// the part's at its place: two of one tile sit apart.
+test('a part given a row carries it as its class, after the rest of its frame', function () {
+    $page = kit()->render('board', ['main' => ['section', 'media', 'map', 'media']], variants: ['section' => 'split'], rows: [
+        'main' => ['row', '', '', 'center'],
+    ]);
+
+    expect($page)->toContain(
+        "<x-kit.section variant=\"split\" class=\"col-span-full!\" />\n",
+        "<x-kit.media />\n",
+        '<x-kit.map />',
+        '<x-kit.media class="col-span-full! justify-self-center w-[calc((100%_-_(var(--cols,1)_-_1)_*_var(--gap,0px))_/_var(--cols,1))]" />',
+    );
+});
+
+test('a row that is not one is refused', function () {
+    kit()->render('board', ['main' => ['map']], rows: ['main' => ['wide']]);
+})->throws(InvalidArgumentException::class, 'is not one');
+
+test('rows given as a list are refused', function () {
+    kit()->render('board', ['main' => ['map']], rows: [['row']]);
+})->throws(InvalidArgumentException::class, 'is a list');
+
+// The centred width is a column's, so every stub that lays a region out as a
+// grid says how many columns it has and how far apart.
+test('every grid stub declares its columns and its gap', function (string $layout) {
+    expect((string) file_get_contents(base_path("stubs/layouts/{$layout}.blade.php")))->toContain('[--gap:', '[--cols:');
+})->with(['board', 'poster', 'stacked']);
+
 test('a region the layout does not have is refused', function () {
     kit()->render('console', ['sidebar' => ['side-nav']]);
 })->throws(InvalidArgumentException::class, 'no region called [sidebar]');

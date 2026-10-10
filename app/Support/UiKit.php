@@ -50,6 +50,22 @@ class UiKit
      */
     private const WORD = '/^[a-z][a-z0-9-]*$/D';
 
+    /**
+     * A part's row, written on its tag as its class: in a region the stub lays
+     * out as a grid, `row` takes the whole row and `center` its own width
+     * centred in a row of its own, where the grid would put it beside the next
+     * part. A row is the part's at its place, region to a word per place,
+     * so two of one tile can sit apart. Deployer's `uikit.RowClasses` byte for byte, because its drawing
+     * puts the same classes on the part. Utilities, compiled from the view the
+     * page is written to; `!` because a stub spans its own first tile from the
+     * grid; the centred width is a column's, off the `--cols` and `--gap` each
+     * grid stub declares. Outside a grid they do nothing.
+     */
+    public const ROWS = [
+        'row' => 'col-span-full!',
+        'center' => 'col-span-full! justify-self-center w-[calc((100%_-_(var(--cols,1)_-_1)_*_var(--gap,0px))_/_var(--cols,1))]',
+    ];
+
     public function __construct(private Filesystem $files, private ?string $target = null) {}
 
     /**
@@ -281,14 +297,16 @@ class UiKit
      * not place is passed over, since a site hands every page the same frame.
      * The word is not checked against what the component draws — the
      * component ignores one it does not take, and deployer asks before it
-     * saves — only that it is a word, because it lands in an attribute.
+     * saves — only that it is a word, because it lands in an attribute. A
+     * part given a row at its place carries it as its class, after the rest (ROWS).
      *
      * @param  array<string, list<string>>  $regions
      * @param  array<mixed>  $variants  each component's arrangement by its name, as the schema gives it; an empty one is none
+     * @param  array<mixed>  $rows  region to a row per place — row, center, or empty for none
      *
      * @throws InvalidArgumentException for a layout, a region, a component, a palette or a direction there is not, or an arrangement that is not a word
      */
-    public function render(string $layout, array $regions, ?string $palette = null, ?string $direction = null, array $variants = [], bool $themePicker = false): string
+    public function render(string $layout, array $regions, ?string $palette = null, ?string $direction = null, array $variants = [], bool $themePicker = false, array $rows = []): string
     {
         $layouts = $this->layouts();
 
@@ -321,15 +339,31 @@ class UiKit
             }
         }
 
+        if ($rows !== [] && array_is_list($rows)) {
+            throw new InvalidArgumentException('rows is a list, and it gives each region a row per place: {"main": ["", "row"]}.');
+        }
+
+        foreach ($rows as $region => $words) {
+            foreach (is_array($words) && array_is_list($words) ? $words : [$words] as $index => $row) {
+                if (! is_string($row) || ($row !== '' && ! isset(self::ROWS[$row]))) {
+                    throw new InvalidArgumentException('The row ['.(is_string($row) ? $row : json_encode($row)).'] for the part at '.$region.' '.$index.' is not one: a part in a grid takes "row", a row of its own, or "center", its own width centred in a row of its own.');
+                }
+            }
+        }
+
         $stub = $this->files->get(base_path("stubs/layouts/{$layout}.blade.php"));
 
-        $page = (string) preg_replace_callback(self::REGION, function (array $match) use ($regions, $variants, $themePicker): string {
-            $tags = array_map(function (string $name) use ($match, $variants, $themePicker): string {
+        $page = (string) preg_replace_callback(self::REGION, function (array $match) use ($regions, $variants, $themePicker, $rows): string {
+            $placed = $regions[$match[2]] ?? [];
+
+            $tags = array_map(function (string $name, int $index) use ($match, $variants, $themePicker, $rows): string {
                 $variant = ($variants[$name] ?? '') === '' ? '' : " variant=\"{$variants[$name]}\"";
                 $picker = $themePicker && $name === 'site-header' ? ' :theme-picker="true"' : '';
+                $word = $rows[$match[2]][$index] ?? '';
+                $row = $word === '' ? '' : ' class="'.self::ROWS[$word].'"';
 
-                return $match[1].'<'.$this->tag($name).$variant.$picker.' />';
-            }, $regions[$match[2]] ?? []);
+                return $match[1].'<'.$this->tag($name).$variant.$picker.$row.' />';
+            }, $placed, array_keys($placed));
 
             return implode("\n", $tags);
         }, $stub);
