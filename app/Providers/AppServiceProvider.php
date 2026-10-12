@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use AlphaOmega\Site\Identity\Identity;
+use App\Support\Field;
 use App\Support\Pages;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -29,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureSiteChrome();
+
+        // A form field is written @field('email', label: __('E-mail'), type: 'email'), never as an <input>:
+        // check_site fails a form holding a field the directive did not draw.
+        Blade::directive('field', fn (string $expression): string => '<?php echo \\'.Field::class."::render({$expression}); ?>");
 
         $this->app->make(Pages::class)->share();
     }

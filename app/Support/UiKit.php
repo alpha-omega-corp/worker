@@ -165,8 +165,10 @@ class UiKit
             // Which faces each palette is drawn in, read by vite.config.js. The
             // server installs with --no-dev and builds the front end there, so
             // the site needs its own copy; a kit older than the map has none.
+            // And the field @field draws, on every site whatever its mockups
+            // placed, since any page may write a form; a kit older than it has none.
             ...array_filter(
-                ['resources/css/fonts.json'],
+                ['resources/css/fonts.json', 'resources/views/components/kit/field.blade.php'],
                 fn (string $path): bool => $this->files->exists($package.'/'.$path),
             ),
             ...array_map(
