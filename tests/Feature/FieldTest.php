@@ -33,6 +33,11 @@ test('@field draws the three kinds through the kit\'s field', function () {
         ->toContain('<option value="">Choisir</option>');
 });
 
+test('@field shares a hint with another field, and takes the focus when told', function () {
+    expect(Blade::render("@field('phone', label: 'Téléphone', type: 'tel', describedby: 'contact-hint', autofocus: true)"))
+        ->toContain('aria-describedby="contact-hint"')->toContain('autofocus="autofocus"');
+});
+
 test('@field takes only the arguments it names, and the kit refuses a field it would draw half right', function (string $template, string $refusal) {
     expect(fn () => Blade::render($template))->toThrow(ViewException::class, $refusal);
 })->with([
