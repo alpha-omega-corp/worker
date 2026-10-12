@@ -13,8 +13,13 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
-    # The base (alpha-omega-corp/site) is a private repository: the secret is
-    # {"github-oauth": {"github.com": "<token>"}}, set on the site's repository.
+    # The base (alpha-omega-corp/site) and the kit (alpha-omega-corp/laravel)
+    # are private repositories: the secret is {"github-oauth": {"github.com":
+    # "<token>"}}, a fine-grained token with read-only Contents on those two.
+    # Set once on the alpha-omega-corp organisation for every repository, for
+    # Actions and again for Dependabot, whose pull requests do not get Actions
+    # secrets: gh secret set COMPOSER_AUTH --org alpha-omega-corp --visibility all
+    # --app actions (then --app dependabot). Not per site.
     env:
       COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
@@ -22,7 +27,7 @@ jobs:
       - name: Check the base can be installed
         if: env.COMPOSER_AUTH == ''
         run: |
-          echo "::error::The COMPOSER_AUTH secret is not set, so composer cannot install alpha-omega-corp/site. Add it under Settings → Secrets and variables → Actions."
+          echo "::error::The COMPOSER_AUTH secret is not set, so composer cannot install alpha-omega-corp/site. Set it on the alpha-omega-corp organisation, for Actions and for Dependabot (see the comment above COMPOSER_AUTH in .github/workflows/tests.yml)."
           exit 1
 
       - name: Checkout code
