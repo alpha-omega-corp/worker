@@ -94,7 +94,8 @@ const paletteWatch = {
 export default defineConfig({
     plugins: lazyPlugins(() => [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            // admin.js is the base's admin script (vendor/alpha-omega-corp/site/resources/js/admin.js), booted with GSAP.
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/admin.js'],
             refresh: true,
             fonts: [
                 // The template's own face, which a page set in a palette never
